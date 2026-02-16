@@ -1,0 +1,115 @@
+### Portfolio Tracker API - Test Collection
+@host = http://localhost:8000
+@token = token
+
+### 3. Login (Get Token)
+# Note: OAuth2 format uses 'username' field tapi isi dengan email
+POST {{host}}/token
+Content-Type: application/x-www-form-urlencoded
+
+username=john@example.com&password=password123
+
+### 4. Get Current User (Need Token)
+GET {{host}}/users/me
+Authorization: Bearer {{token}}
+
+### 5. Create Asset - Bitcoin
+POST {{host}}/assets
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+    "symbol": "BTC",
+    "name": "Bitcoin",
+    "asset_type": "crypto"
+}
+
+### 6. Create Asset - Apple Stock
+POST {{host}}/assets
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+    "symbol": "AAPL",
+    "name": "Apple Inc",
+    "asset_type": "stock"
+}
+
+### 7. Get All Assets
+GET {{host}}/assets
+
+### 8. Create Transaction - Buy Bitcoin
+POST {{host}}/transactions
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+    "asset_id": 1,
+    "transaction_type": "buy",
+    "quantity": 0.5,
+    "price": 45000,
+    "fee": 10,
+    "transaction_date": "2025-11-01T10:00:00",
+    "notes": "First BTC purchase"
+}
+
+### 9. Create Transaction - Buy More Bitcoin
+POST {{host}}/transactions
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+    "asset_id": 1,
+    "transaction_type": "buy",
+    "quantity": 0.3,
+    "price": 48000,
+    "fee": 8,
+    "transaction_date": "2025-11-15T14:30:00",
+    "notes": "Second BTC purchase"
+}
+
+### 10. Create Transaction - Buy Apple Stock
+POST {{host}}/transactions
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+    "asset_id": 2,
+    "transaction_type": "buy",
+    "quantity": 10,
+    "price": 180,
+    "fee": 5,
+    "transaction_date": "2025-11-20T09:00:00",
+    "notes": "AAPL stock purchase"
+}
+
+### 11. Create Transaction - Sell Some Bitcoin
+POST {{host}}/transactions
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+    "asset_id": 1,
+    "transaction_type": "sell",
+    "quantity": 0.2,
+    "price": 50000,
+    "fee": 5,
+    "transaction_date": "2025-11-25T16:00:00",
+    "notes": "Partial BTC sell"
+}
+
+### 12. Get All Transactions
+GET {{host}}/transactions
+Authorization: Bearer {{token}}
+
+### 13. Get Current Positions
+GET {{host}}/positions
+Authorization: Bearer {{token}}
+
+### 14. Get Portfolio Summary
+GET {{host}}/portfolio/summary
+Authorization: Bearer {{token}}
+
+### 15. Delete a Transaction
+DELETE {{host}}/transactions/1
+Authorization: Bearer {{token}}
