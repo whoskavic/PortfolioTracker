@@ -1,0 +1,71 @@
+@host = http://localhost:8000
+@token = token
+
+### Get All Transactions
+GET {{host}}/transactions
+Authorization: Bearer {{token}}
+
+### Create Transaction - Buy Bitcoin (IDR)
+POST {{host}}/transactions
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+    "asset_id": 1,
+    "transaction_type": "buy",
+    "quantity": 0.00043753,
+    "price": 1142655360,
+    "fee": 54,
+    "currency": "IDR",
+    "transaction_date": "2026-04-05T10:49:00",
+    "notes": "Buy BTC dengan IDR"
+}
+
+### Create Transaction - Buy More Bitcoin (USD)
+POST {{host}}/transactions
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+    "asset_id": 1,
+    "transaction_type": "buy",
+    "quantity": 0.3,
+    "price": 48000,
+    "fee": 8,
+    "transaction_date": "2025-11-15T14:30:00",
+    "notes": "Second BTC purchase"
+}
+
+### Create Transaction - Buy Apple Stock
+POST {{host}}/transactions
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+    "asset_id": 2,
+    "transaction_type": "buy",
+    "quantity": 10,
+    "price": 180,
+    "fee": 5,
+    "transaction_date": "2025-11-20T09:00:00",
+    "notes": "AAPL stock purchase"
+}
+
+### Create Transaction - Sell Bitcoin
+POST {{host}}/transactions
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+    "asset_id": 1,
+    "transaction_type": "sell",
+    "quantity": 0.2,
+    "price": 50000,
+    "fee": 5,
+    "transaction_date": "2025-11-25T16:00:00",
+    "notes": "Partial BTC sell"
+}
+
+### Delete Transaction
+DELETE {{host}}/transactions/1
+Authorization: Bearer {{token}}

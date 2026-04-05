@@ -1,0 +1,6 @@
+@host = http://localhost:8000
+@token = token
+
+### Get Current Positions
+GET {{host}}/positions
+Authorization: Bearer {{token}}

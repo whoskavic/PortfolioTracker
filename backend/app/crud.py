@@ -5,6 +5,7 @@ from typing import List, Optional
 from passlib.context import CryptContext
 
 from app import models, schemas
+from app.currency_service import currency_service
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -33,8 +34,11 @@ def create_user(db: Session, user: schemas.UserCreate) -> models.User:
     db.refresh(db_user)
     return db_user
 
-def authenticate_user(db: Session, email: str, password: str) -> Optional[models.User]:
-    user = get_user_by_email(db, email)
+def authenticate_user(db: Session, username_or_email: str, password: str) -> Optional[models.User]:
+    # Try email first, then username
+    user = get_user_by_email(db, username_or_email)
+    if not user:
+        user = get_user_by_username(db, username_or_email)
     if not user:
         return None
     if not verify_password(password, user.hashed_password):
@@ -90,8 +94,25 @@ def create_transaction(
     transaction: schemas.TransactionCreate, 
     user_id: int
 ) -> models.Transaction:
-    # Calculate total amount
+    # Calculate total amount in original currency
     total_amount = (transaction.quantity * transaction.price) + transaction.fee
+    
+    # Initialize USD values
+    price_usd = transaction.price
+    fee_usd = transaction.fee
+    total_amount_usd = total_amount
+    exchange_rate = 1.0
+    
+    # Convert to USD if currency is not USD
+    if transaction.currency.upper() != "USD":
+        import asyncio
+        # Get exchange rate
+        rate = asyncio.run(currency_service.get_exchange_rate(transaction.currency.upper(), "USD"))
+        if rate:
+            exchange_rate = rate
+            price_usd = transaction.price * rate
+            fee_usd = transaction.fee * rate
+            total_amount_usd = total_amount * rate
     
     # Create transaction
     db_transaction = models.Transaction(
@@ -101,6 +122,11 @@ def create_transaction(
         quantity=transaction.quantity,
         price=transaction.price,
         fee=transaction.fee,
+        currency=transaction.currency.upper(),
+        price_usd=price_usd,
+        fee_usd=fee_usd,
+        total_amount_usd=total_amount_usd,
+        exchange_rate=exchange_rate,
         total_amount=total_amount,
         transaction_date=transaction.transaction_date,
         notes=transaction.notes

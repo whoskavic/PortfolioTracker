@@ -50,7 +50,14 @@ class Transaction(Base):
     price = Column(Float, nullable=False)  # Price per unit
     fee = Column(Float, default=0.0)
     
-    total_amount = Column(Float, nullable=False)  # quantity * price + fee
+    # Currency fields
+    currency = Column(String, default="USD")  # IDR, USD, etc
+    price_usd = Column(Float, nullable=True)  # Auto-converted to USD
+    fee_usd = Column(Float, nullable=True)
+    exchange_rate = Column(Float, nullable=True)  # Rate used for conversion
+    
+    total_amount = Column(Float, nullable=False)  # quantity * price + fee (in original currency)
+    total_amount_usd = Column(Float, nullable=True)  # in USD
     realized_pnl = Column(Float, default=0.0)  # For sell transactions
     
     transaction_date = Column(DateTime, nullable=False)

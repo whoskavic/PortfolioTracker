@@ -1,0 +1,13 @@
+@host = http://localhost:8000
+@token = token
+
+### Login (Get Token)
+# Note: OAuth2 format uses 'username' field but fill with email
+POST {{host}}/token
+Content-Type: application/x-www-form-urlencoded
+
+username=testuser&password=password123
+
+### Get Current User
+GET {{host}}/users/me
+Authorization: Bearer {{token}}

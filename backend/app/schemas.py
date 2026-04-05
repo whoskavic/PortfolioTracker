@@ -52,6 +52,7 @@ class TransactionBase(BaseModel):
     quantity: float = Field(..., gt=0, description="Quantity must be positive")
     price: float = Field(..., gt=0, description="Price must be positive")
     fee: float = Field(default=0.0, ge=0, description="Fee must be non-negative")
+    currency: str = Field(default="USD", description="Currency code (USD, IDR, etc)")
     transaction_date: datetime
     notes: Optional[str] = None
 
@@ -62,6 +63,10 @@ class Transaction(TransactionBase):
     id: int
     user_id: int
     total_amount: float
+    price_usd: Optional[float] = None
+    fee_usd: Optional[float] = None
+    total_amount_usd: Optional[float] = None
+    exchange_rate: Optional[float] = None
     realized_pnl: float
     created_at: datetime
     

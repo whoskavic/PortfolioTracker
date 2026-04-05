@@ -1,0 +1,7 @@
+@host = http://localhost:8000
+
+### Health Check
+GET {{host}}/health
+
+### Root
+GET {{host}}/

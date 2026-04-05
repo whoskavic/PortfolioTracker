@@ -1,0 +1,27 @@
+@host = http://localhost:8000
+@token = token
+
+### Get All Assets
+GET {{host}}/assets
+
+### Create Asset - Bitcoin
+POST {{host}}/assets
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+    "symbol": "BTC",
+    "name": "Bitcoin",
+    "asset_type": "crypto"
+}
+
+### Create Asset - Apple Stock
+POST {{host}}/assets
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+    "symbol": "AAPL",
+    "name": "Apple Inc",
+    "asset_type": "stock"
+}
