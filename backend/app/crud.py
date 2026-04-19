@@ -106,8 +106,8 @@ def create_transaction(
     # Convert to USD if currency is not USD
     if transaction.currency.upper() != "USD":
         import asyncio
-        # Get exchange rate
-        rate = asyncio.run(currency_service.get_exchange_rate(transaction.currency.upper(), "USD"))
+        tx_date = transaction.transaction_date.date() if hasattr(transaction.transaction_date, 'date') else None
+        rate = asyncio.run(currency_service.get_exchange_rate(transaction.currency.upper(), "USD", for_date=tx_date))
         if rate:
             exchange_rate = rate
             price_usd = transaction.price * rate
