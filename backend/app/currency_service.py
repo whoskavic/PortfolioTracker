@@ -1,15 +1,13 @@
 import httpx
-import os
 from datetime import datetime, timedelta, date, timezone
 from typing import Optional, Dict
-from dotenv import load_dotenv
 
-load_dotenv()
+
+BASE_URL = "https://{date}.currency-api.pages.dev/v1/currencies/{currency}.json"
 
 
 class CurrencyService:
     def __init__(self):
-        self.exchange_api_key = os.getenv("EXCHANGE_RATE_API_KEY", "")
         self.cache: Dict[str, dict] = {}
         self.current_rate_ttl = timedelta(minutes=60)
 
@@ -20,46 +18,29 @@ class CurrencyService:
         for_date: Optional[date] = None,
     ) -> Optional[float]:
         today = datetime.now(timezone.utc).date()
-        use_historical = for_date is not None and for_date < today
+        is_historical = for_date is not None and for_date < today
+        date_key = for_date.isoformat() if is_historical else "latest"
+        cache_key = f"{from_currency}_{to_currency}_{date_key}"
 
-        if use_historical:
-            cache_key = f"{from_currency}_{to_currency}_{for_date.isoformat()}"
-            # Historical rates never change — cache forever
-            if cache_key in self.cache:
-                return self.cache[cache_key]["rate"]
-        else:
-            cache_key = f"{from_currency}_{to_currency}"
-            if cache_key in self.cache:
-                cached = self.cache[cache_key]
-                if datetime.now(timezone.utc) - cached["timestamp"] < self.current_rate_ttl:
-                    return cached["rate"]
+        if cache_key in self.cache:
+            cached = self.cache[cache_key]
+            # Historical rates never change — always valid
+            # Current rates expire after TTL
+            if is_historical or datetime.now(timezone.utc) - cached["timestamp"] < self.current_rate_ttl:
+                return cached["rate"]
 
         try:
-            if use_historical:
-                rate = await self._fetch_historical(from_currency, to_currency, for_date)
-            else:
-                rate = await self._fetch_current(from_currency, to_currency)
-
+            rate = await self._fetch(from_currency, to_currency, date_key)
             self.cache[cache_key] = {"rate": rate, "timestamp": datetime.now(timezone.utc)}
             return rate
         except Exception as e:
-            print(f"Error fetching exchange rate: {e}")
+            print(f"Error fetching exchange rate ({from_currency}->{to_currency} @ {date_key}): {e}")
             return None
 
-    async def _fetch_historical(
-        self,
-        from_currency: str,
-        to_currency: str,
-        for_date: date,
-    ) -> float:
-        """
-        Fetch historical rate from currency-api.pages.dev (free, no key required).
-        Falls back to the earliest available date if the requested date has no data.
-        """
-        date_str = for_date.isoformat()
+    async def _fetch(self, from_currency: str, to_currency: str, date_key: str) -> float:
         from_lower = from_currency.lower()
         to_lower = to_currency.lower()
-        url = f"https://{date_str}.currency-api.pages.dev/v1/currencies/{from_lower}.json"
+        url = BASE_URL.format(date=date_key, currency=from_lower)
 
         async with httpx.AsyncClient(timeout=10.0) as client:
             response = await client.get(url)
@@ -68,49 +49,7 @@ class CurrencyService:
 
         rates = data.get(from_lower, {})
         if to_lower not in rates:
-            raise Exception(f"Currency {to_currency} not found in historical data for {date_str}")
-        return rates[to_lower]
-
-    async def _fetch_current(
-        self,
-        from_currency: str,
-        to_currency: str,
-    ) -> float:
-        """Fetch current rate from ExchangeRate-API (uses existing API key)."""
-        if not self.exchange_api_key:
-            return await self._fetch_current_free(from_currency, to_currency)
-
-        url = (
-            f"https://v6.exchangerate-api.com/v6/{self.exchange_api_key}"
-            f"/pair/{from_currency}/{to_currency}"
-        )
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            response = await client.get(url)
-            response.raise_for_status()
-            data = response.json()
-
-        if data.get("result") == "success":
-            return data["conversion_rate"]
-        raise Exception(f"API Error: {data.get('error-type')}")
-
-    async def _fetch_current_free(
-        self,
-        from_currency: str,
-        to_currency: str,
-    ) -> float:
-        """Fallback: free currency-api for current rate (no key needed)."""
-        from_lower = from_currency.lower()
-        to_lower = to_currency.lower()
-        url = f"https://latest.currency-api.pages.dev/v1/currencies/{from_lower}.json"
-
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            response = await client.get(url)
-            response.raise_for_status()
-            data = response.json()
-
-        rates = data.get(from_lower, {})
-        if to_lower not in rates:
-            raise Exception(f"Currency {to_currency} not found")
+            raise Exception(f"{to_currency} not found for {date_key}")
         return rates[to_lower]
 
     async def convert_amount(
